@@ -11,21 +11,30 @@ if (!file.exists('dataset.zip')) {
     unzip(zipfile = "dataset.zip")
 }
 
-train.dataset.path <- file.path("UCI HAR Dataset", "train")
-test.dataset.path <- file.path("UCI HAR Dataset", "test")
+root.dataset.path <- file.path("UCI HAR Dataset")
+train.dataset.path <- file.path(root.dataset.path, "train")
+test.dataset.path <- file.path(root.dataset.path, "test")
 
+## Reading the training and test datasets, plus it's labels.
 train.set.in <- readLines(file.path(train.dataset.path, "X_train.txt"))
 train.set <- vapply(X = train.set.in,
                     FUN = function(X)
                         as.numeric(unlist(strsplit(X, split = "[ ]+"))),
                     FUN.VALUE = numeric(562))
+train.set.labels <- as.integer(readLines(file.path(train.dataset.path, "y_train.txt")))
 
 test.set.in <- readLines(file.path(test.dataset.path, "X_test.txt"))
 test.set <- vapply(X = test.set.in,
                    FUN = function(X)
                        as.numeric(unlist(strsplit(X, split = "[ ]+"))),
                    FUN.VALUE = numeric(562))
+test.set.labels <- as.integer(readLines(file.path(test.dataset.path, "y_test.txt")))
 
+## Reading the activity attributed to each label.
+activity.labels <- read.table(file.path(root.dataset.path, "activity_labels.txt"),
+                              col.names = c("Label", "Activity"),
+                              colClasses = "character")
+activity.labels <- activity.labels %>% mutate(Label = as.integer(Label))
 
 setwd(my.wd)
 file.remove(data.path)
