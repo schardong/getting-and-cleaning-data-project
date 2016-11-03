@@ -1,24 +1,28 @@
 source("pre_run_reqs.R")
 
+## Setting the correct dataset paths.
 data.path <- file.path(".", "data")
 dataset.file <- file.path(data.path, "dataset.zip")
-dir.create(data.path, showWarnings = FALSE)
-
-if (!file.exists(dataset.file)) {
-    download.file(url = "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip",
-                  destfile = dataset.file)
-    unzip(zipfile = dataset.file)
-}
-
 root.dataset.path <- file.path(data.path, "UCI HAR Dataset")
 train.dataset.path <- file.path(root.dataset.path, "train")
 test.dataset.path <- file.path(root.dataset.path, "test")
 
+dir.create(data.path, showWarnings = FALSE)
+if (!file.exists(dataset.file)) {
+    download.file(url = "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip",
+                  destfile = dataset.file)
+    unzip(zipfile = dataset.file,
+          exdir = data.path)
+}
+
 ## Reading the dataset's features.
+## We replace the minus signs for underscores in order to be able to select the
+## columns by name using dplyr later.
 features <- read.table(file.path(root.dataset.path, "features.txt"),
                        col.names = c("Label", "Name"),
                        colClasses = "character")
-features <- features %>% mutate(Label = as.integer(Label))
+features <- features %>% mutate(Label = as.integer(Label),
+                                Name = gsub("-", "_", Name))
 
 ## Reading the activity attributed to each label.
 activity.labels <- read.table(file.path(root.dataset.path, "activity_labels.txt"),
@@ -65,11 +69,16 @@ names(merged.set)[1:(ncol(merged.set)-2)] <- features$Name
 mean.cols <- grep("mean", names(merged.set))
 freq.cols <- grep("Freq", names(merged.set)[mean.cols])
 mean.cols <- mean.cols[-freq.cols]
+## Getting the std columns of the dataset.
 std.cols <- grep("std", names(merged.set))
+## Merging the mean and std column indices.
 selected.cols <- names(merged.set)[c(mean.cols, std.cols)]
-selected.cols <- c(selected.cols, "Activities", "Subject")
+selected.cols <- c("Subject", "Activities", selected.cols)
 
 merged.set <- merged.set[, selected.cols]
+
+## Reference:
+##  https://thoughtfulbloke.wordpress.com/2015/09/09/getting-and-cleaning-the-assignment/
 
 ## Tasks:
 ##   1. Merges the training and the test sets to create one data set. (done)
@@ -77,7 +86,6 @@ merged.set <- merged.set[, selected.cols]
 ##   3. Uses descriptive activity names to name the activities in the data set
 ##   4. Appropriately labels the data set with descriptive variable names.
 ##   5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-
 
 ## y_(train/test).txt provides the ACTIVITIES column for the dataset.
 ## features.txt provides the column names for the matrices.
