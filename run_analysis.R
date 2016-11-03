@@ -97,4 +97,5 @@ merged.set <- arrange(merged.set, Subject, Activity)
 ## Building the tidy dataset and saving it to a file.
 tidy.set <- merged.set %>% group_by(Subject, Activity) %>% summarize_each(funs(mean))
 write.table(x = tidy.set,
-            file = "tidy-dataset.txt")
+            file = "tidy-dataset.txt",
+            row.names = FALSE)
