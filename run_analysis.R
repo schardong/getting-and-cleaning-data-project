@@ -79,14 +79,12 @@ merged.set <- merged.set[, selected.cols]
 
 ## Reference:
 ##  https://thoughtfulbloke.wordpress.com/2015/09/09/getting-and-cleaning-the-assignment/
-
 ## Tasks:
 ##   1. Merges the training and the test sets to create one data set. (done)
-##   2. Extracts only the measurements on the mean and standard deviation for each measurement.
-##   3. Uses descriptive activity names to name the activities in the data set
-##   4. Appropriately labels the data set with descriptive variable names.
-##   5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-
-## y_(train/test).txt provides the ACTIVITIES column for the dataset.
-## features.txt provides the column names for the matrices.
-## subject_(train/test).txt provides the SUBJECT column for the dataset.
+##   2. Extracts only the measurements on the mean and standard deviation for each measurement. (done)
+##   3. Uses descriptive activity names to name the activities in the data set (TODO)
+##     3.a. Replace the numbers in the Activities column for the corresponding labels.
+##     3.b. Use the merged.set Activities column as index to the activity.labels Activities column.
+##       and replace the merged.set column using those values.
+##   4. Appropriately labels the data set with descriptive variable names. (done)
+##   5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject. (TODO)
