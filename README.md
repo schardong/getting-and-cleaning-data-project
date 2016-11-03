@@ -22,6 +22,8 @@ To extract only the mean and standard deviation columns, we use the **grep** fun
 
 The tidy dataset is produced by first grouping the dataset by the **Subject** and **Activity** columns, to calculate the means of the distributions, we call the **sumarize_each** function, which produces the mean values by activity and subject of the dataset. The resulting dataset has 180 observations and 68 variables and is saved to the *tidy-dataset.txt* file.
 
+To read the processed dataset, a simple call to **read.table** with the default parameters, except the **header** parameter, which should be set to **TRUE** should work.
+
 [1] [Dataset](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip)
 
 [2] [UCI Human Activity Recognition Using Smartphones Homepage](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones)
