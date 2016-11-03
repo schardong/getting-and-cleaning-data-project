@@ -24,11 +24,15 @@ features <- read.table(file.path(root.dataset.path, "features.txt"),
 features <- features %>% mutate(Label = as.integer(Label),
                                 Name = gsub("-", "_", Name))
 
-## Reading the activity attributed to each label.
+## Reading the activity attributed to each label, removing the numeric label,
+## capitalizing the first letter of each activity and replacing the underscores
+## for spaces.
 activity.labels <- read.table(file.path(root.dataset.path, "activity_labels.txt"),
                               col.names = c("Label", "Activity"),
                               colClasses = "character")
-activity.labels <- activity.labels %>% mutate(Label = as.integer(Label))
+activity.labels <- activity.labels %>%
+  select(Activity) %>%
+  mutate(Activity = str_to_title(gsub('_', ' ', Activity)))
 
 ## Reading the training dataset, it's activity labels and subject labels.
 train.set.in <- readLines(file.path(train.dataset.path, "X_train.txt"))
@@ -40,7 +44,7 @@ train.set$V1 <- NULL
 train.set.activities <- as.integer(readLines(file.path(train.dataset.path, "y_train.txt")))
 train.set.subjects <- as.integer(readLines(file.path(train.dataset.path, "subject_train.txt")))
 train.set <- train.set %>%
-  mutate(Activities = train.set.activities, Subject = train.set.subjects)
+  mutate(Activity = train.set.activities, Subject = train.set.subjects)
 rm(train.set.in, train.set.activities, train.set.subjects)
 
 ## Reading the test dataset and it's labels.
@@ -53,15 +57,17 @@ test.set$V1 <- NULL
 test.set.activities <- as.integer(readLines(file.path(test.dataset.path, "y_test.txt")))
 test.set.subjects <- as.integer(readLines(file.path(test.dataset.path, "subject_test.txt")))
 test.set <- test.set %>%
-  mutate(Activities = test.set.activities, Subject = test.set.subjects)
+  mutate(Activity = test.set.activities, Subject = test.set.subjects)
 rm(test.set.in, test.set.activities, test.set.subjects)
 
-## Merging the training and test sets
+## Merging the training and test sets and deleting them, since they are no longer
+## needed.
 merged.set <- rbind(train.set, test.set)
 names(merged.set)[1:(ncol(merged.set)-2)] <- features$Name
+rm(train.set, test.set)
 
 ## Getting the mean and std columns of the dataset.
-## Dirty trick to get only the *mean() named columns and no the *meanFreq() ones.
+## Dirty trick to get only the *mean() named columns and not the *meanFreq() ones.
 ## We first search for all columns with a "mean" keyword in them and then, in
 ## these resulting columns, we search for the ones with the "Freq" keyword.
 ## After their indices are returned, we remove them from the subset of "mean"-named
@@ -71,18 +77,22 @@ freq.cols <- grep("Freq", names(merged.set)[mean.cols])
 mean.cols <- mean.cols[-freq.cols]
 ## Getting the std columns of the dataset.
 std.cols <- grep("std", names(merged.set))
-## Merging the mean and std column indices.
+## Merging the mean and std column indices and adding the Subject and Activity
+## columns to the set.
 selected.cols <- names(merged.set)[c(mean.cols, std.cols)]
-selected.cols <- c("Subject", "Activities", selected.cols)
+selected.cols <- c("Subject", "Activity", selected.cols)
 
 merged.set <- merged.set[, selected.cols]
+
+## Replacing the activity labels by nice names.
+merged.set <- merged.set %>% mutate(Activity, Activity = activity.labels$Activity[Activity])
 
 ## Reference:
 ##  https://thoughtfulbloke.wordpress.com/2015/09/09/getting-and-cleaning-the-assignment/
 ## Tasks:
 ##   1. Merges the training and the test sets to create one data set. (done)
 ##   2. Extracts only the measurements on the mean and standard deviation for each measurement. (done)
-##   3. Uses descriptive activity names to name the activities in the data set (TODO)
+##   3. Uses descriptive activity names to name the activities in the data set (done)
 ##     3.a. Replace the numbers in the Activities column for the corresponding labels.
 ##     3.b. Use the merged.set Activities column as index to the activity.labels Activities column.
 ##       and replace the merged.set column using those values.
