@@ -17,12 +17,15 @@ if (!file.exists(dataset.file)) {
 
 ## Reading the dataset's features.
 ## We replace the minus signs for underscores in order to be able to select the
-## columns by name using dplyr later.
+## columns by name using dplyr later. We also replace the parenthesis in a
+## subsequent call to gsub.
 features <- read.table(file.path(root.dataset.path, "features.txt"),
                        col.names = c("Label", "Name"),
                        colClasses = "character")
-features <- features %>% mutate(Label = as.integer(Label),
-                                Name = gsub("-", "_", Name))
+features <- features %>%
+  select(Name) %>%
+  mutate(Name = gsub('[-,]', '_', Name)) %>%
+  mutate(Name = gsub('[()]', '', Name))
 
 ## Reading the activity attributed to each label, removing the numeric label,
 ## capitalizing the first letter of each activity and replacing the underscores
@@ -43,8 +46,9 @@ train.set <- as.data.frame(t(vapply(X = train.set.in,
 train.set$V1 <- NULL
 train.set.activities <- as.integer(readLines(file.path(train.dataset.path, "y_train.txt")))
 train.set.subjects <- as.integer(readLines(file.path(train.dataset.path, "subject_train.txt")))
-train.set <- train.set %>%
-  mutate(Activity = train.set.activities, Subject = train.set.subjects)
+train.set <- mutate(train.set,
+                    Activity = train.set.activities,
+                    Subject = train.set.subjects)
 rm(train.set.in, train.set.activities, train.set.subjects)
 
 ## Reading the test dataset and it's labels.
@@ -56,8 +60,9 @@ test.set <- as.data.frame(t(vapply(X = test.set.in,
 test.set$V1 <- NULL
 test.set.activities <- as.integer(readLines(file.path(test.dataset.path, "y_test.txt")))
 test.set.subjects <- as.integer(readLines(file.path(test.dataset.path, "subject_test.txt")))
-test.set <- test.set %>%
-  mutate(Activity = test.set.activities, Subject = test.set.subjects)
+test.set <- mutate(test.set,
+                   Activity = test.set.activities,
+                   Subject = test.set.subjects)
 rm(test.set.in, test.set.activities, test.set.subjects)
 
 ## Merging the training and test sets and deleting them, since they are no longer
@@ -81,20 +86,15 @@ std.cols <- grep("std", names(merged.set))
 ## columns to the set.
 selected.cols <- names(merged.set)[c(mean.cols, std.cols)]
 selected.cols <- c("Subject", "Activity", selected.cols)
-
 merged.set <- merged.set[, selected.cols]
 
 ## Replacing the activity labels by nice names.
-merged.set <- merged.set %>% mutate(Activity, Activity = activity.labels$Activity[Activity])
+merged.set <- mutate(merged.set, Activity, Activity = activity.labels$Activity[Activity])
 
-## Reference:
-##  https://thoughtfulbloke.wordpress.com/2015/09/09/getting-and-cleaning-the-assignment/
-## Tasks:
-##   1. Merges the training and the test sets to create one data set. (done)
-##   2. Extracts only the measurements on the mean and standard deviation for each measurement. (done)
-##   3. Uses descriptive activity names to name the activities in the data set (done)
-##     3.a. Replace the numbers in the Activities column for the corresponding labels.
-##     3.b. Use the merged.set Activities column as index to the activity.labels Activities column.
-##       and replace the merged.set column using those values.
-##   4. Appropriately labels the data set with descriptive variable names. (done)
-##   5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject. (TODO)
+## Reordering the dataset by subject ID and activity.
+merged.set <- arrange(merged.set, Subject, Activity)
+
+## Building the tidy dataset and saving it to a file.
+tidy.set <- merged.set %>% group_by(Subject, Activity) %>% summarize_each(funs(mean))
+write.table(x = tidy.set,
+            file = "tidy-dataset.txt")
